@@ -188,3 +188,7 @@ xpath["likers_from_photo"] = {
     "liked_counter_button": "//div/article/div[2]/section[2]/div/div/a",
     "second_counter_button": "//div/article/div[2]/section[2]/div/div/button",
 }
+
+xpath["post_to_instagram"] = {
+    ""
+}
