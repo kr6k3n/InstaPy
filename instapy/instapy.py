@@ -34,6 +34,7 @@ from .like_util import get_links_for_username
 from .like_util import like_comment
 from .story_util import watch_story
 from .login_util import login_user
+from .posting_util import post_to_instagram
 from .settings import Settings
 from .settings import localize_path
 from .print_log_writer import log_follower_num
@@ -5032,8 +5033,11 @@ class InstaPy:
                 "\n{}\n{}".format(owner_relationship_info, run_time_msg)
             )
 
+    def post_image(self,image_path,caption):
+        post_to_instagram(self.browser, image_path, caption)
+
     def set_do_reply_to_comments(self, enabled: bool = False, percentage: int = 0):
-        """ Define if the comments on posts should be replied """
+        """ Define if the comments on posts should be replied  """
 
         self.do_reply_to_comments = enabled
         self.reply_to_comments_percent = percentage
