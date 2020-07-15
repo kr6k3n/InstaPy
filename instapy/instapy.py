@@ -5034,7 +5034,7 @@ class InstaPy:
             )
 
     def post_image(self,image_path,caption):
-        post_to_instagram(self.browser, image_path, caption)
+        post_to_instagram(self.browser, image_path, caption,self.logger)
 
     def set_do_reply_to_comments(self, enabled: bool = False, percentage: int = 0):
         """ Define if the comments on posts should be replied  """
