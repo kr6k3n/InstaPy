@@ -29,24 +29,25 @@ WebGLRenderingContext.prototype.getParameter = parameter => {
   return getParameter(parameter);
 };
 
+// Code commented because incompatible with posting_util
 // -- mock image size = 0
-['height', 'width'].forEach(property => {
-  // store the existing descriptor
-  var imageDescriptor = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, property);
+// ['height', 'width'].forEach(property => {
+//   // store the existing descriptor
+//   var imageDescriptor = Object.getOwnPropertyDescriptor(HTMLImageElement.prototype, property);
 
-  // redefine the property with a patched descriptor
-  Object.defineProperty(HTMLImageElement.prototype, property, {
-    ...imageDescriptor,
-    get: () => {
-      // return an arbitrary non-zero dimension if the image failed to load
-      if (this.complete && this.naturalHeight == 0) {
-        return 20;
-      }
-      // otherwise, return the actual dimension
-      return imageDescriptor.get.apply(this);
-    },
-  });
-});
+//   // redefine the property with a patched descriptor
+//   Object.defineProperty(HTMLImageElement.prototype, property, {
+//     ...imageDescriptor,
+//     get: () => {
+//       // return an arbitrary non-zero dimension if the image failed to load
+//       if (this.complete && this.naturalHeight == 0) {
+//         return 20;
+//       }
+//       // otherwise, return the actual dimension
+//       return imageDescriptor.get.apply(this);
+//     },
+//   });
+// });
 
 // -- pass permissions test
 var originalQuery = window.navigator.permissions.query;
@@ -55,11 +56,13 @@ window.navigator.permissions.query = parameters => (
     Promise.resolve({ state: Notification.permission }) :
     originalQuery(parameters)
 );
+console.log("Extension injected")
 `;
 
-document.arrive('head', () => {
-  var script = document.createElement('script');
-  script.innerHTML = customScript;
-  script.type = 'text/javascript';
-  document.head.insertBefore(script, document.head.children[0]);
-});
+var script = document.createElement('script');
+script.textContent = customScript;
+script.type = 'text/javascript';
+
+ document.arrive('head', () => {
+   document.head.insertBefore(script, document.head.children[0]);
+ });

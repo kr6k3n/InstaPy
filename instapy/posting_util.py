@@ -3,19 +3,18 @@ from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, WebDriverException, ElementNotVisibleException
 
 def close_popups(browser, xpath):
-        for _ in range(5):
-            time.sleep(1)
-            browser.find_element_by_css_selector(
-                'body').send_keys(Keys.PAGE_DOWN)
-            try:
-                browser.find_element_by_xpath(xpath).click()
-                break
-            except:
-                pass
+    body = browser.find_element_by_css_selector('body')
+    for _ in range(5):
+        time.sleep(1)
+        body.send_keys(Keys.PAGE_DOWN)
+        try:
+            browser.find_element_by_xpath(xpath).click()
+            break
+        except:
+            pass
 
 
 def post_to_instagram(browser, image_path, caption, logger):
-
         """
         Posts Image from filepath to instanciated instagram account
 
@@ -24,36 +23,34 @@ def post_to_instagram(browser, image_path, caption, logger):
             - image_path (full path to the picture path)
             - caption
         """
-        #/html/body/div[4]/div/div/div[3]/button[2]
-        
+        browser.implicitly_wait(3)
         clicked = False
         while not clicked:
              try:
-                 browser.find_element_by_xpath(
-                     "//div[@role='menuitem']").click()
+                 post_button = browser.find_element_by_xpath("//div[@role='menuitem']")
+                 post_button.click()
                  clicked = True
              except ElementNotVisibleException:
                  #sometimes a popup blocks a post button on the bottom
-                 
                  close_popups(browser,"/html/body/div[4]/div/div[2]/div/div[5]/button")
 
         input_elem = browser.find_element_by_xpath('//*[@id="react-root"]/form/input')
         input_elem.send_keys(image_path)
         
 
-        time.sleep(1)
-        browser.find_element_by_xpath(
-            "//button[contains(text(), 'Next')]").click()
-        time.sleep(0.2)
+        next_button = browser.find_element_by_xpath(
+            "//button[contains(text(), 'Next')]")
+        next_button.click()
         
 
-        browser.find_element_by_tag_name("textarea").send_keys(caption)
-        
-        time.sleep(0.5)
-        
+        caption_box = browser.find_element_by_tag_name("textarea")
+        caption_box.send_keys(caption)
+            
 
-        browser.find_element_by_xpath( "//button[contains(text(), 'Share')]").click()
+        share_button = browser.find_element_by_xpath( "//button[contains(text(), 'Share')]")
+        share_button.click()
         #wait until it goes back to main page (until photo has been posted)
+        #TODO: relaunch sharing if sharing has not succeded
         while browser.current_url != "https://www.instagram.com/":
             time.sleep(0.1)
         return "Success"

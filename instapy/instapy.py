@@ -4382,7 +4382,7 @@ class InstaPy:
 
         return mutual_following
 
-    def end(self, threaded_session: bool = False):
+    def end(self, threaded_session: bool = True):
         """Closes the current session"""
 
         Settings.InstaPy_is_running = False

@@ -1203,7 +1203,7 @@ def web_address_navigator(browser, link):
 
 @contextmanager
 def interruption_handler(
-    threaded=False,
+    threaded=True,
     SIG_type=signal.SIGINT,
     handler=signal.SIG_IGN,
     notify=None,
@@ -1834,9 +1834,10 @@ def is_page_available(browser, logger):
 
 
 @contextmanager
-def smart_run(session, threaded=False):
+def smart_run(session, threaded=False, logged_in=False):
     try:
-        session.login()
+        if not logged_in:
+            session.login()
         yield
     except NoSuchElementException:
         # The problem is with a change in IG page layout
