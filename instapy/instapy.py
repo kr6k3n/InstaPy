@@ -491,7 +491,7 @@ class InstaPy:
 
         return self
 
-    def set_comments(self, comments: list = [], media: str = None):
+    def set_comments(self, comments: any = [], media: str = None):
         """
         Sets the possible posted comments.
         'What an amazing shot :heart_eyes: !' is an example for using emojis.
