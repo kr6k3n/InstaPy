@@ -1,6 +1,8 @@
 import time
+from .util import click_element
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, WebDriverException, ElementNotVisibleException
+from selenium.webdriver.common.action_chains import ActionChains
 
 def close_popups(browser, xpath):
     body = browser.find_element_by_css_selector('body')
@@ -8,7 +10,7 @@ def close_popups(browser, xpath):
         time.sleep(1)
         body.send_keys(Keys.PAGE_DOWN)
         try:
-            browser.find_element_by_xpath(xpath).click()
+            click_element(browser, browser.find_element_by_xpath(xpath))
             break
         except:
             pass
@@ -28,7 +30,7 @@ def post_to_instagram(browser, image_path, caption, logger):
         while not clicked:
              try:
                  post_button = browser.find_element_by_xpath("//div[@role='menuitem']")
-                 post_button.click()
+                 click_element(browser,post_button)
                  clicked = True
              except ElementNotVisibleException:
                  #sometimes a popup blocks a post button on the bottom
@@ -40,7 +42,7 @@ def post_to_instagram(browser, image_path, caption, logger):
 
         next_button = browser.find_element_by_xpath(
             "//button[contains(text(), 'Next')]")
-        next_button.click()
+        click_element(browser, next_button)
         
 
         caption_box = browser.find_element_by_tag_name("textarea")
@@ -48,7 +50,7 @@ def post_to_instagram(browser, image_path, caption, logger):
             
 
         share_button = browser.find_element_by_xpath( "//button[contains(text(), 'Share')]")
-        share_button.click()
+        click_element(browser, share_button)
         #wait until it goes back to main page (until photo has been posted)
         #TODO: relaunch sharing if sharing has not succeded
         while browser.current_url != "https://www.instagram.com/":
