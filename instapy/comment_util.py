@@ -62,8 +62,12 @@ def comment_image(browser, username, comments, blacklist, logger, logfolder):
     # check action availability
     if quota_supervisor("comments") == "jump":
         return False, "jumped"
-
-    rand_comment = random.choice(comments).format(username)
+    rand_comment = None
+    if callable(comments):
+        rand_comment = comments()
+    else:
+        rand_comment = random.choice(comments).format(username)
+    
     rand_comment = emoji.demojize(rand_comment)
     rand_comment = emoji.emojize(rand_comment, use_aliases=True)
 
