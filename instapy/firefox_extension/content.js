@@ -47,7 +47,7 @@ WebGLRenderingContext.prototype.getParameter = parameter => {
 //       return imageDescriptor.get.apply(this);
 //     },
 //   });
-// });
+});
 
 // -- pass permissions test
 var originalQuery = window.navigator.permissions.query;
