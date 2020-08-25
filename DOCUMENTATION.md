@@ -1,5 +1,8 @@
 # Documentation
 
+**InstaPy is being sponsored by the following partner. Please help to support us by taking a look and signing up to a free trial 😊**
+<a href="https://tracking.gitads.io/?repo=InstaPy"> <img src="https://images.gitads.io/InstaPy" alt="GitAds"/> </a>
+
 ### Table of Contents
 - **[Settings](#settings)**
   - [Liking](#liking)
@@ -18,7 +21,7 @@
   - [Don't unfollow active users](#dont-unfollow-active-users)
   - [Blacklist Campaign](#blacklist-campaign)
   - [Simulation](#simulation)
-  - [Skipping user for private account, no profile picture, business account](#skipping-user-for-private-account-no-profile-picture-business-account)
+  - [Skipping user for private account, no profile picture, business account, bio keywords](#skipping-user-for-private-account-no-profile-picture-business-account-bio-keywords)
   - [Liking based on the number of existing likes a post has](#liking-based-on-the-number-of-existing-likes-a-post-has)
   - [Commenting based on the number of existing comments a post has](#commenting-based-on-the-number-of-existing-comments-a-post-has)
   - [Commenting based on mandatory words in the description or first comment](#commenting-based-on-mandatory-words-in-the-description-or-first-comment)
@@ -26,7 +29,7 @@
   - [Interactions based on the number of posts a user has](#interactions-based-on-the-number-of-posts-a-user-has)
   - [Custom action delays](#custom-action-delays)
   - [Target Lists](#target-lists)
-  
+
  <br />
 
 - **[Actions](#actions)**
@@ -51,10 +54,9 @@
   - [Interact by Comments](#interact-by-comments)
   - [Accept pending follow requests](#accept-pending-follow-requests)
   - [Remove outgoing follow requests](#remove-outgoing-follow-requests)
-  - [Skip based on Profile Bio](#skip-based-on-profile-bio)
   - [InstaPy Pods](#instapy-pods)
   - [InstaPy Stories](#instapy-stories)
-  
+
  <br />
 
 - **[Third Party features](#third-party-features)**
@@ -72,7 +74,7 @@
   - [Use a proxy](#use-a-proxy)
   - [Running in threads](#running-in-threads)
   - [Choose the browser version](#choose-the-browser-version)
-  
+
  <br />
 
 - **[Relationship tools](#relationship-tools)**
@@ -89,7 +91,7 @@
   - [Windows Task Scheduler](#windows-task-scheduler)
   - [cron](#cron)
   - [Schedule](#schedule)  
-  
+
  <br />
 
 - **[Additional Information](#additional-information)**
@@ -108,7 +110,7 @@
 
 ---
 
-<br /> 
+<br />
 <br />
 
 ## Settings
@@ -133,27 +135,34 @@ session.set_do_comment(enabled=True, percentage=25)
 ``` python
 # Configure a simple list of optional comments, one will be selected at random when commenting:
 session.set_comments(['Awesome', 'Really Cool', 'I like your stuff'])
+```
 
-# Or configure conditional comments as follows:
-# The list ofconditional comments is scanned until the first item that satisfies the mandatory words condition is found 
-# and then the comments associated with that items are used.
-# The mandatory words condition is matched against the description and first comment of the image. The condition is  
-# satisfied if any individual word from the list is found or if all the words from a sub list are found. 
+Or configure conditional comments to provide a more contextual commenting based on the caption of the image:
+Conditional comments are created as a list of dictionaries, each one contains a definition of
+[mandatory words](#mandatory-words) and a list of comments.
+The list of conditional comments is scanned until the first item that satisfies the mandatory words condition is found
+and then one of the comments associated with that item is selected at random to be used.  
+This can best be understood with an example:
+``` python
 comments=[
-    # either "icecave" or "ice_cave" will satisfy this:
+    # either "icecave" OR "ice_cave" will satisfy this:
     {'mandatory_words': ["icecave", "ice_cave"], 'comments': ["Nice shot. Ice caves are amazing", "Cool. Aren't ice caves just amazing?"]},
-    
-    # either "high_mountain" OR ("high" and "mountain") will satisfy this:
+
+    # either "high_mountain" OR ("high" AND "mountain") will satisfy this:
     {'mandatory_words': ["high_mountain", ["high", "mountain"]], 'comments': ["I just love high mountains"]},
 
-    # Only ("high" and "tide" together) will satisfy this:
+    # Only ("high" AND "tide" together) will satisfy this:
     {'mandatory_words': [["high", "tide"]], 'comments': ["High tides are better than low"]}
+
+    # Only "summer" AND ("lake" OR "occean") will satisfy this:
+    {'mandatory_words': [["summer", ["lake", "occean"]], 'comments': ["Summer fun"]}
 
 ]
 session.set_comments(comments)
+```
 
-# you can also set comments for specific media types (Photo / Video)
-
+You can also set comments for specific media types (Photo / Video)
+``` python
 session.set_comments(['Nice shot!'], media='Photo')
 session.set_comments(['Great Video!'], media='Video')
 
@@ -346,7 +355,27 @@ session.set_mandatory_words(['#food', '#instafood'])
 ```
 
 `.set_mandatory_words` searches the description, location and owner comments for words and
-will like the image if **any** of those words are in there
+will like the image if the mandatory words condition is met.  
+The mandatory words list can be a simple list of words or a nested structure of lists within lists.   
+* When using a simple word list the condition between the words is "OR" so if any of the words from the list exists in
+the image text it will be matched.   
+* When using a nested list of lists the top level list condition is "OR" and the condition alternates between "AND"
+and "OR" with every nesting level.
+
+For example:
+~~~
+     # either "icecave" or "ice_cave" will satisfy this:
+     ["icecave", "ice_cave"]
+
+    # either "high_mountain" OR ("high" AND "mountain") will satisfy this:
+    ["high_mountain", ["high", "mountain"]]
+
+    # Only ("high" AND "tide" together) will satisfy this:
+    [["high", "tide"]]
+
+    # Only "summer" AND ("lake" OR "occean") will satisfy this:
+    [["summer", ["lake", "occean"]]
+~~~
 
 ### Mandatory Language
 
@@ -399,7 +428,7 @@ session.set_simulation(enabled=True, percentage=66)
 ```
 
 
-### Skipping user for private account, no profile picture, business account
+### Skipping user for private account, no profile picture, business account, bio keywords
 
 #### This is used to skip users with certain condition
 ```python
@@ -408,10 +437,12 @@ session.set_skip_users(skip_private=True,
                        skip_no_profile_pic=False,
                        no_profile_pic_percentage=100,
                        skip_business=False,
-		       skip_non_business=False,
+                       skip_non_business=False,
                        business_percentage=100,
                        skip_business_categories=[],
-                       dont_skip_business_categories=[])
+                       dont_skip_business_categories=[],
+                       skip_bio_keyword=[],
+                       mandatory_bio_keywords=[])
 ```
 ##### Skip private account
 **This is done by default**
@@ -441,8 +472,8 @@ You can set a percentage of skipping:
 ```python
 session.set_skip_users(skip_private=True,
                        skip_no_profile_pic=True,
-		               skip_business=True,
-		               business_percentage=100)
+                       skip_business=True,
+                       business_percentage=100)
 ```
 This will skip all users that have business account activated.
 You can set a percentage of skipping:
@@ -455,8 +486,8 @@ You can set a percentage of skipping:
 ```python
 session.set_skip_users(skip_private=True,
                        skip_no_profile_pic=True,
-		       skip_business=True,
-		       skip_business_categories=['Creators & Celebrities'])
+                       skip_business=True,
+                       skip_business_categories=['Creators & Celebrities'])
 ```
 This will skip all business accounts that have category in given list
 **N.B.** In _skip_business_categories_ you can add more than one category
@@ -465,8 +496,8 @@ This will skip all business accounts that have category in given list
 ```python
 session.set_skip_users(skip_private=True,
                        skip_no_profile_pic=True,
-		       skip_business=True,
-		       dont_skip_business_categories=['Creators & Celebrities'])
+                       skip_business=True,
+                       dont_skip_business_categories=['Creators & Celebrities'])
 ```
 This will skip all business accounts except the ones that have a category that matches one item in the list of _dont_skip_business_categories_
 **N.B.** If both _dont_skip_business_categories_ and _skip_business_categories_, InstaPy will skip only business accounts in the list given from _skip_business_categories_.
@@ -481,7 +512,15 @@ This will skip all business accounts except the ones that have a category that m
                         skip_non_business=True,
                         dont_skip_business_categories=['Creators & Celebrities'])
  ```
- Thiw will skip all non business and business accounts except categories in _dont_skip_business_categories_.
+ This will skip all non business and business accounts except categories in _dont_skip_business_categories_.
+
+###### Skip based on bio keywords
+```python
+session.set_skip_users(skip_bio_keyword=["lifestyle"],
+                       mandatory_bio_keywords=["art", "photography"])
+```
+This will skip users that have "lifestyle" and users that don't have "art" or "photography" in their bio or username.
+See the [Mandatory Words](#mandatory-words) section for details on how to define complex mandatory words conditions.  
 
 ### Liking based on the number of existing likes a post has
 ##### This is used to check the number of existing likes a post has and if it _either_ **exceed** the _maximum_ value set OR **does not pass** the _minimum_ value set then it will not like that post
@@ -539,7 +578,7 @@ This feature is helpful when you want to comment only on specific tags.
 session.set_delimit_commenting(enabled=True, comments_mandatory_words=['cat', 'dog'])
 ```
 > This will only comment on posts that contain **either** cat or dog in the post description or first comment.
-> You can also require sets of words. See the [Commenting](#commenting) section for detains on how to do that 
+> You can also require sets of words. See the [Commenting](#commenting) section for detains on how to do that
 
 
 ### Interactions based on the number of followers and/or following a user has
@@ -684,7 +723,7 @@ Functions you can use ```target_list``` with:
 
 ---
 
-<br /> 
+<br />
 <br />
 
 ## Actions
@@ -697,6 +736,8 @@ session.like_by_tags(['natgeo', 'world'], amount=10)
 
 #### Parameters:
  `tags`: The tags that will be searched for and posts will be liked from
+
+  `use_random_tags`: The tags that will be searched for and posts will be randomized
 
   `amount`: The amount of posts that will be liked
 
@@ -1269,14 +1310,6 @@ session.remove_follow_requests(amount=200, sleep_delay=600)
  `engagement_mode`:
  Desided engagement mode for your posts. There are four levels of engagement modes 'no_comments', 'light', 'normal' and 'heavy'(`normal` by default). Setting engagement_mode to 'no_comments' makes you receive zero comments on your posts from pod members, 'light' encourages approximately 10% of pod members to comment on your post, similarly it's around 30% and 90% for 'normal' and 'heavy' modes respectively. Note: Liking, following or any other kind of engagements doesn't follow these modes.
 
-### Skip based on profile bio
-
-```python
-session.set_skip_users(skip_bio_keyword = ['free shipping',' Order', 'visa', 'paypal'])
-```
-
-This will skip all users that have one these keywords on their bio.
-
 ### Instapy Stories
 
 #### Watching Stories with interact
@@ -1708,12 +1741,12 @@ to the InstaPy session
 
 #### Prerequisites
 You will need to create a token, for this go into your Telegram App and talk with @fatherbot.
-You will also need to set your username as it is checked to ensure that you are authorized to 
+You will also need to set your username as it is checked to ensure that you are authorized to
 access the InstaPy session, to do so go to Settings -> Profile -> Username.
 
 #### Supported actions
 There are 3 supported actions:
-  - /start : will start the interaction between the bot and instapy. Please note: that the telegram bot 
+  - /start : will start the interaction between the bot and instapy. Please note: that the telegram bot
   cannot send you messages until you first send it a /start message. The bot will store the chat_id in the logs folder
   file telegram_chat_id.txt to be reused in further sessions (so you have to actually do /start just one time)
   - /report : will gather and show the current session statistics
@@ -1726,7 +1759,7 @@ from instapy.plugins import InstaPyTelegramBot
         session = InstaPy(username=insta_username,
                           password=insta_password,
                           bypass_with_mobile=True)
-                          
+
         telegram = InstaPyTelegramBot(token='insert_real_token_here', telegram_username='my_username', instapy_session=session)
 
         # if you want to receive the information when the session ends
@@ -1738,8 +1771,8 @@ from instapy.plugins import InstaPyTelegramBot
 Additional parameters:
    - debug=True if you want low level telegram debug information
    - proxy if you need one, here is the structure that needs to be passed
-    
-```python 
+
+```python
     example_proxy = {
          'proxy_url': 'http://PROXY_HOST:PROXY_PORT/',
          # Optional, if you need authentication:
@@ -1750,7 +1783,7 @@ Additional parameters:
 ```
 
 #### Additional functionality
-you can use 
+you can use
 ```python
 telegram.send_message(text="this is a message")
 ```
@@ -1758,11 +1791,11 @@ telegram.send_message(text="this is a message")
 So you are able to send additional message inside your script if needed. Remember that the telegram bot
 is not able to send messages as long as you haven't done at least one /start
 
-   
-<br /> 
+
+<br />
 <br />
 
-## Instance Settings 
+## Instance Settings
 ### Running on a Headless Browser
 Use `headless_browser` parameter to run the bot via the CLI. Works great if running the scripts locally, or to deploy on a server. No GUI, less CPU intensive. [Example](http://g.recordit.co/BhEgXANLhJ.gif)
 
@@ -1802,9 +1835,9 @@ You can use InstaPy behind a proxy by specifying server address, port and/or pro
 
 Simple proxy setup example:
 ```python
-session = InstaPy(username=insta_username, 
+session = InstaPy(username=insta_username,
                   password=insta_password,
-		  proxy_address='8.8.8.8', 
+		  proxy_address='8.8.8.8',
 		  proxy_port=8080)
 
 ```
@@ -1844,7 +1877,7 @@ with smart_run(session, threaded=True):
 ```
 
 
-Closing session with `end()` method 
+Closing session with `end()` method
 ```python
 session = InstaPy()
 session.login()
@@ -1868,7 +1901,7 @@ session = InstaPy(username=insta_username,
 
 ---
 
-<br /> 
+<br />
 <br />
 
 ## Relationship tools
@@ -2211,7 +2244,7 @@ There are **several** `use cases` of this tool for **various purposes**.
 
 ---
 
-<br /> 
+<br />
 <br />
 
 ## Automate InstaPy
@@ -2284,7 +2317,7 @@ while True:
 
 ---
 
-<br /> 
+<br />
 <br />
 
 ## Additional Information
@@ -2490,7 +2523,7 @@ pip uninstall instapy
 
 ## Workspace folders
 ### Migrating your data to the workspace folder
-After installing InstaPy with pip, you have to run it once by calling `python quickstart.py`. Once the web browser opens, you can abort the session by closing the browser or your terminal. 
+After installing InstaPy with pip, you have to run it once by calling `python quickstart.py`. Once the web browser opens, you can abort the session by closing the browser or your terminal.
 
 You will now find an `InstaPy` folder located at the above mentioned home folder.
 Simply copy and paste the content of your logs folder into that workspace folder in order to assure that all your data is migrated.
@@ -2511,7 +2544,7 @@ Such as, if your username is `Cherry`, let's show where your InstaPy folder woul
 
 Note that, at the start of each run, it shows you the **workspace** folder in use.
 
-<br /> 
+<br />
 
 <details>
   <summary>
@@ -2597,7 +2630,7 @@ Note that, `get_workspace()` is a function used _internally_ and makes a **works
 It means, you must use only the `set_workspace()` feature to set a custom **workspace** folder and not try to use `get_workspace()` for that purpose..
 
 
-### Set a custom _location_ 
+### Set a custom _location_
 You can set any of the **custom** _locations_ you like, **any time**!  
 E.g. setting the _location_ of the **database** file,  
 ```python
@@ -2643,7 +2676,7 @@ Settings.chromedriver_location = "C:\\Users\\MMega\\Documents\\My_InstaPy\\logs\
 ```
 As you can see, you have to use `set_workspace()` only once.  
 Why it is so difficult in those 👆🏼 regards?  
- - It's to preserve custom location assignments alive (`Settings.*`) cos otherwise setting another **workspace** would override any previously _manually_ assigned location(s). 
+ - It's to preserve custom location assignments alive (`Settings.*`) cos otherwise setting another **workspace** would override any previously _manually_ assigned location(s).
 
 </details>
 
@@ -2715,7 +2748,7 @@ python quickstart.py -u "Toto.Lin8"  -p "4X27_Tibor"
   <b>
     Advanced 🔎
   </b>
-</summary> 
+</summary>
 
 You can **pass** and then **parse** the **_custom_** CLI arguments you like right inside the **quickstart** script.  
 To do it, open up your **quickstart** script and add these lines,
@@ -2795,7 +2828,7 @@ That's it.
 
 
 ### How not to be banned
-Built-in delays prevent your account from getting banned. 
+Built-in delays prevent your account from getting banned.
 However, excessive use of this tool may result in action blocks or permanent bans.
 Use the Quota Supervisor feature to set some fixed limits for the bot for maximum safety.
 
@@ -2821,12 +2854,12 @@ Set these in instapy/settings.py if you're locating the library in the /usr/lib/
 Settings.database_location = '/path/to/instapy.db'
 ```
 
-### Split SQLite by Username 
+### Split SQLite by Username
 If you experience issue with multiple accounts Instapy.db lockup. You can add the following flag
 
 `-sdb` when running in Command line
 
-or 
+or
 
 To do this simply pass the `split_db=True` parameter in the InstaPy constructor like so:
 
@@ -2906,11 +2939,11 @@ selenium.common.exceptions.WebDriverException: Message: unknown error: Cannot re
 (Session info: headless **chrome=75.0.3770.80**)
 (Driver info: **chromedriver=2.36.540469** (1881fd7f8641508feb5166b7cae561d87723cfa8),platform=Mac OS X 10.14.5 x86_64)
 
-Notice that *chrome* version is **75** and the *chromedriver* version is **2.36**. 
+Notice that *chrome* version is **75** and the *chromedriver* version is **2.36**.
 
 According to the [release notes](https://chromedriver.storage.googleapis.com/2.36/notes.txt) for chromedriver, version 2.36 only supports Chrome versions 63-65.
 
-Which means, there is a mismatch in chromedriver and Chrome that installed on my machine. 
+Which means, there is a mismatch in chromedriver and Chrome that installed on my machine.
 
 There several steps to this fix.
 
@@ -2926,23 +2959,23 @@ Since *Instapy* seems to work well, in my experience on my Mac, with chromedrive
 1. **Uninstall Google Chrome**
 	I used an app called [App Cleaner]("https://freemacsoft.net/appcleaner/") to remove Chrome.
 	After you install App Cleaner, simply drag Google Chrome, from the Applications folder to App Cleaner and Remove All
-	
+
 2. **Download Chrome 65** *(Read this step completely before proceeding)*
-	- Find and install Chrome 65 from [sllimjet.com]("https://www.slimjet.com/chrome/google-chrome-old-version.php") 
+	- Find and install Chrome 65 from [sllimjet.com]("https://www.slimjet.com/chrome/google-chrome-old-version.php")
 
 	- After you have installed Chrome 65, open and click the Apple Security Ok button that alerts you to the fact this was downloaded from the internet.
 	- THEN, immediately close Google Chrome completely by holding **`CMD+Q`**. This is extremely important! Google Chrome will being its auto-update function. So it must be completely closed, not just the window.
 	*We need Chrome to run first and put all its files where it needs them.*
-	
+
 3. **Prevent Google Chrome from updating**
-	- Open **Terminal** and type 
+	- Open **Terminal** and type
 	`sudo chmod -R 000 ~/Library/Google`
-	
+
 	- You will be asked for your computer password, enter it.
-	
+
 	- Next run the command
 	`sudo rm -rf /Library/Google/`
-	
+
 	Google Chrome should not be able to auto-update now.
 
 If for some reason Chrome is still updating, or you're unable to run the command in step 3, you can edit your `/etc/hosts file` to include the following line: `0.0.0.0 tools.google.com`

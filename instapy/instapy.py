@@ -254,6 +254,7 @@ class InstaPy:
         self.min_posts = None
         self.skip_business_categories = []
         self.skip_bio_keyword = []
+        self.mandatory_bio_keywords = []
         self.dont_skip_business_categories = []
         self.skip_business = False
         self.skip_non_business = False
@@ -747,7 +748,7 @@ class InstaPy:
                 bbox["lat_max"],
                 radius,
             )
-            url = "https://query.displaypurposes.com/local/?bbox={}".format(bbox_url)
+            url = "https://displaypurposes.com/local/?bbox={}".format(bbox_url)
 
             req = requests.get(url)
             data = json.loads(req.text)
@@ -1320,6 +1321,7 @@ class InstaPy:
             self.skip_business_categories,
             self.dont_skip_business_categories,
             self.skip_bio_keyword,
+            self.mandatory_bio_keywords,
             self.logger,
             self.logfolder,
         )
@@ -1345,9 +1347,10 @@ class InstaPy:
         skip_business: bool = False,
         business_percentage: int = 100,
         skip_business_categories: list = [],
-        skip_bio_keyword: list = [],
         dont_skip_business_categories: list = [],
         skip_non_business: bool = False,
+        skip_bio_keyword: list = [],
+        mandatory_bio_keywords: list = [],
     ):
 
         self.skip_business = skip_business
@@ -1358,6 +1361,7 @@ class InstaPy:
         self.skip_private_percentage = private_percentage
         self.skip_non_business = skip_non_business
         self.skip_bio_keyword = skip_bio_keyword
+        self.mandatory_bio_keywords = mandatory_bio_keywords
         if skip_business:
             self.skip_business_categories = skip_business_categories
             if len(skip_business_categories) == 0:
@@ -1826,6 +1830,7 @@ class InstaPy:
     def like_by_tags(
         self,
         tags: list = None,
+        use_random_tags: bool = False,
         amount: int = 50,
         skip_top_posts: bool = True,
         use_smart_hashtags: bool = False,
@@ -1857,6 +1862,12 @@ class InstaPy:
         tags = [tag.strip() for tag in tags]
         tags = tags or []
         self.quotient_breach = False
+
+        # if session includes like_by_tags, then randomize the tag list 
+        if use_random_tags is True:
+            random.shuffle(tags)
+            for i, tag in enumerate(tags):
+                self.logger.info("Tag list randomized: [{}/{}/{}]".format(i + 1, len(tags), tag))
 
         for index, tag in enumerate(tags):
             if self.quotient_breach:

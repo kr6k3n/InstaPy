@@ -16,6 +16,7 @@ from .util import get_number_of_posts
 from .util import get_action_delay
 from .util import explicit_wait
 from .util import extract_text_from_element
+from .util import evaluate_mandatory_words
 from .quota_supervisor import quota_supervisor
 from .unfollow_util import get_following_status
 from .event import Event
@@ -687,7 +688,7 @@ def check_link(
         image_text = image_text + "\n" + location_name
 
     if mandatory_words:
-        if not any((word in image_text for word in mandatory_words)):
+        if not evaluate_mandatory_words(image_text, mandatory_words):
             return (
                 True,
                 user_name,
@@ -754,7 +755,8 @@ def like_image(browser, username, blacklist, logger, logfolder, total_liked_img)
         # sleep real quick right before clicking the element
         sleep(2)
         like_elem = browser.find_elements_by_xpath(like_xpath)
-        click_element(browser, like_elem[0])
+        if len(like_elem) > 0:
+            click_element(browser, like_elem[0])
         # check now we have unlike instead of like
         liked_elem = browser.find_elements_by_xpath(unlike_xpath)
 
